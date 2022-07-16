@@ -1,99 +1,96 @@
-import { Component } from 'react';
+import { useState, useEffect } from 'react';
+
 import Form from './Form';
 import Contacts from './Contacts';
 import Filter from './Filter';
+
 import { nanoid } from 'nanoid';
 import PropTypes from 'prop-types';
 
-class App extends Component {
-  static propTypes = {
-    id: PropTypes.string,
-    name: PropTypes.string,
-    number: PropTypes.string,
-    filter: PropTypes.string,
-  };
+// ====== Второй способ работы с localStorage и useState ======
+//  == Отдельная функция работы с localStorage и useEffect ==
+// const useLocalStorage = (key, defaultValue) => {
+//   const [state, setState] = useState(() => {
+//     return JSON.parse(window.localStorage.getItem(key)) ?? defaultValue;
+//   });
+//   useEffect(() => {
+//     window.localStorage.setItem(key, JSON.stringify(state));
+//   }, [key, state]);
 
-  state = {
-    contacts: [],
-    filter: '',
-  };
+//   return [state, setState];
+// };
+//  == Записи useState в функции ==
+// const [contacts, setContacts] = useState('contacts', []);
+// const [filter, setFilter] = useState('filter', '');
+//
+// =============================================================
 
-  componentDidMount() {
-    const contacts = localStorage.getItem('contacts');
-    const parsedContacts = JSON.parse(contacts);
+const App = () => {
+  const [contacts, setContacts] = useState(() => {
+    return JSON.parse(window.localStorage.getItem('contacts')) ?? [];
+  });
+  const [filter, setFilter] = useState('');
 
-    if (parsedContacts) {
-      this.setState({ contacts: parsedContacts });
-    }
-  }
+  useEffect(() => {
+    window.localStorage.setItem('contacts', JSON.stringify(contacts));
+  }, [contacts]);
 
-  componentDidUpdate(prevProps, prevState) {
-    if (this.state.contacts !== prevState.contacts) {
-      localStorage.setItem('contacts', JSON.stringify(this.state.contacts));
-    }
-  }
-
-  formSubmitHandler = data => {
-    const newName = this.state.contacts.map(el => el.name.toLowerCase());
+  const formSubmitHandler = data => {
+    const newName = contacts.map(el => el.name.toLowerCase());
     if (newName.includes(data.name.toLowerCase())) {
       return alert(`${data.name} is already in contacts`);
     }
     const input = { id: nanoid(3), name: data.name, number: data.number };
-    this.setState({ contacts: [...this.state.contacts, input] });
+    setContacts(prevState => [...prevState, input]);
   };
 
-  onFilter = event => {
-    const { value } = event.currentTarget;
-    this.setState({
-      filter: value,
-    });
+  const onFilter = event => {
+    console.log(event.currentTarget.value);
+    setFilter(event.currentTarget.value);
   };
 
-  onCheck = () => {
-    const { filter, contacts } = this.state;
-
+  const onCheck = () => {
     if (filter) {
-      return contacts.filter(el =>
-        el.name.toLowerCase().includes(filter.toLowerCase())
-      );
+      return contacts.filter(el => el.name.includes(filter));
     } else {
       return contacts;
     }
   };
 
-  onDeleteContact = id => {
-    const contactName = this.state.contacts.filter(el => el.id !== id);
-    this.setState({
-      contacts: contactName,
-    });
+  const onDeleteContact = id => {
+    const contactName = contacts.filter(el => el.id !== id);
+    setContacts(contactName);
   };
 
-  render() {
-    const filteredContacts = this.onCheck();
-    return (
-      <div
-        style={{
-          height: 'auto',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'center',
-          alignItems: 'center',
-          fontSize: 20,
-          color: '#010101',
-          padding: 50,
-        }}
-      >
-        <h1>Phonebook</h1>
-        <Form onSubmit={this.formSubmitHandler} />
-        <Filter state={this.state} onChange={this.onFilter} />
-        <h2>Contacts</h2>
-        <Contacts
-          contacts={filteredContacts}
-          deleteContact={this.onDeleteContact}
-        />
-      </div>
-    );
-  }
-}
+  const filteredContacts = onCheck();
+
+  return (
+    <div
+      style={{
+        height: 'auto',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'center',
+        alignItems: 'center',
+        fontSize: 20,
+        color: '#010101',
+        padding: 50,
+      }}
+    >
+      <h1>Phonebook</h1>
+      <Form onSubmit={formSubmitHandler} />
+      <Filter filter={filter} onChange={onFilter} />
+      <h2>Contacts</h2>
+      <Contacts contacts={filteredContacts} deleteContact={onDeleteContact} />
+    </div>
+  );
+};
 
 export default App;
+
+App.propTypes = {
+  id: PropTypes.string,
+  name: PropTypes.string,
+  number: PropTypes.string,
+  filter: PropTypes.string,
+};

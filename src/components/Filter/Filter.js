@@ -1,17 +1,11 @@
-import React from 'react';
 import propTypes from 'prop-types';
 
-const Filter = ({ state, onChange }) => {
+const Filter = ({ filter, onChange }) => {
   return (
     <div>
       <label>
         Find contacts by name
-        <input
-          type="text"
-          name="filter"
-          value={state.filter}
-          onInput={onChange}
-        />
+        <input type="text" name="filter" value={filter} onInput={onChange} />
       </label>
     </div>
   );
